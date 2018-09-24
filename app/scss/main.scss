@@ -21,10 +21,15 @@
     list-style-type: none;
     border: 1px solid;
     margin: 0.25em;
-    padding: 0.5em;
-    .genre--listing &,
-    label {
+    //.genre--listing &,
+    .tag-label {
+      padding: 0.5em;
       cursor: pointer;
+      display: block;
+    }
+    [type="checkbox"]:checked + label {
+      color: rgb(255,255,255);
+      background-color: hsla(0, 0, 0, 0.5);
     }
     .genre--selector {
       @extend %invisible;

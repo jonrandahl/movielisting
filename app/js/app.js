@@ -1,5 +1,3 @@
-
-
  const tmdb = "https://api.themoviedb.org/3/";
  const api_key = "6f981a18477d5a7d8c53fb62f8b54ee8";
 
@@ -58,7 +56,7 @@ function requestAccess(){
     });
   }
 }
-/// To return a movie listing based on the requested parameters
+/// To return a movie listing based on the requested parameters ~ unused
  function searchMovies(movies){
   console.log("searching for:", movies);
   axios.get(generateApiUrl('search/movie'))
@@ -94,21 +92,26 @@ function getLatestMovies() {
         console.error(err);
       });
 }
-/// Send the results as template strings to their respective parent elements
-function renderMovieListing(filtered = []){
 
-  let availableGenres = localStorage.getItem("currentGenres") ? JSON.parse(localStorage.getItem("currentGenres")) : getGenres();
-
-  let filmstrip = '';
+function setMovieListing(filters = "3", f = "genre_ids"){
   let movies = localStorage.getItem("latestMovies") ? JSON.parse(localStorage.getItem("latestMovies")) : getLatestMovies();
+  renderMovieListing(movies);
+  if (Array.isArray(filters) && filters.length > 0){
+    let filteredMovies = movies.filter((m) => m[f].some(s=>filters.some(sieve => sieve === s)));
+    renderMovieListing(filteredMovies);
+  }
+  if (typeof filters === 'string' || filters instanceof String){
+    let filteredMovies = movies.filter((m) => m[f] >= filters);
+    renderMovieListing(filteredMovies);
+  }
+}
+
+/// Send the results as template strings to their respective parent elements
+function renderMovieListing(movies){
+  let filmstrip = '';
   let movieGenres = [];
 
-  if (filtered.length > 0){
-    console.log(filtered);
-    return movies.filter((el) => el.genre_ids.some(g=>filtered.some(genre => genre === g)));
-  }
-
-  console.log(movies);
+  let availableGenres = localStorage.getItem("currentGenres") ? JSON.parse(localStorage.getItem("currentGenres")) : getGenres();
 
   for(let movie of movies){
     movieGenres.push(... new Set(movie.genre_ids));
@@ -119,7 +122,7 @@ function renderMovieListing(filtered = []){
         <figcaption class="movie--credits">
           <h2 class="movie--title">${movie.title}</h2>
           <ul class="movie--genres tags">
-            ${filmGenres.map(genre => (`<li class="genre tag">${genre.name}</li>`)).join('')}
+            ${filmGenres.map(genre => (`<li class="genre tag"><span class="tag-label">${genre.name}</span></li>`)).join('')}
           </ul>
         </figcaption>
       </figure>
@@ -140,37 +143,35 @@ function renderMovieListing(filtered = []){
     genres += `
       <li class="genre tag">
         <input class="genre--selector" type="checkbox" id="${name}-${id}" name="genre-tags" value="${id}">
-        <label for="${name}-${id}" name="${name}-label">${genre.name}</label>
+        <label class="tag-label" for="${name}-${id}" name="${name}-label">${genre.name}</label>
       </li>`;
   }
   document.getElementById('genres').innerHTML = genres;
-  const selectedGenres = setGenreFilters();
-  console.log(selectedGenres);
+
 }
 
-function setGenreFilters() {
-  const selectedGenres = [];
-  const tags = document.querySelector('.genre.tags');
-  tags.addEventListener('click', (e) => {
-    const tagbox = e.target.closest('[type="checkbox"]');
-    if (tagbox && tags.contains(tagbox)){
-      if (selectedGenres.includes(tagbox.value)){
-        selectedGenres.splice(selectedGenres.indexOf(tagbox.value),1);
-      }
-      else {
-        selectedGenres.push(tagbox.value);
-      }
-    }
+const genreFilter = document.querySelector('.genre_filter--trigger');
+genreFilter.addEventListener('click', (e)=>{
+  e.preventDefault();
+  let selectedGenres = [];
+  let tags = document.querySelectorAll(':checked');
+  for (let tag of tags){
+    selectedGenres.push(parseInt(tag.value));
+  }
+  setMovieListing(selectedGenres);
+});
 
-    return selectedGenres;
-  });
-}
-
+const ratingSlider = document.querySelector('#ratingSlider');
+ratingSlider.addEventListener('change', (e) => {
+  let rating = e.target.value;
+  document.querySelector('.current-rating').lastChild.innerHTML = rating;
+  setMovieListing(rating, "vote_average");
+});
 
  /// While we could just apply the method to the window object,
  /// we don't want to stop rendering of the page with scripts!
  if (document.readyState === "loading") {
-  document.addEventListener('DOMContentLoaded', renderMovieListing);
+  document.addEventListener('DOMContentLoaded', setMovieListing);
  } else {
-  renderMovieListing();
+  setMovieListing();
  }
