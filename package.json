@@ -1,12 +1,11 @@
 {
-  "name": "testbuild",
+  "name": "movielisting",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Zone Digital Code Task ~ TMDB Movie Listing",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Jon R Humphrey [@precisioncoding]",
   "license": "ISC",
 
   "browserslist": [
