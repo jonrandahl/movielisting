@@ -92,17 +92,24 @@ function getLatestMovies() {
         console.error(err);
       });
 }
-
-function setMovieListing(filters = "3", f = "genre_ids"){
-  let movies = localStorage.getItem("latestMovies") ? JSON.parse(localStorage.getItem("latestMovies")) : getLatestMovies();
-  renderMovieListing(movies);
-  if (Array.isArray(filters) && filters.length > 0){
-    let filteredMovies = movies.filter((m) => m[f].some(s=>filters.some(sieve => sieve === s)));
+/// base reader from the locally stored movie feed.
+/// defaults to filter the movies by the rating of 3 or better
+/// also accepts an array of genre ids to then filter the list from too
+function setMovieListing(filters = "3", filter = "genre_ids"){
+  try{
+    let movies = localStorage.getItem("latestMovies") ? JSON.parse(localStorage.getItem("latestMovies")) : getLatestMovies();
+    let filteredMovies = movies; ///create a default object to start with
+    //Now see if we've passed in an Array to filter by, which needs to go a bit deeper?
+    if (Array.isArray(filters) && filters.length > 0){
+      filteredMovies = movies.filter((m) => m[filter].some(s=>filters.some(sieve => sieve === s)));
+    }
+    //Otherwise the filter is a string, more than likely to be
+    if (typeof filters === 'string' || filters instanceof String){
+      filteredMovies = movies.filter((m) => m[filter] >= filters);
+    }
     renderMovieListing(filteredMovies);
-  }
-  if (typeof filters === 'string' || filters instanceof String){
-    let filteredMovies = movies.filter((m) => m[f] >= filters);
-    renderMovieListing(filteredMovies);
+  }catch(err){
+    console.error(err);
   }
 }
 
@@ -121,6 +128,7 @@ function renderMovieListing(movies){
         <img class="movie--poster" srcset="https://image.tmdb.org/t/p/w342/${movie.poster_path} 320w, https://image.tmdb.org/t/p/w500/${movie.poster_path} 480w, https://image.tmdb.org/t/p/original/${movie.poster_path} 800w" sizes="(max-width: 320px) 280px, (max-width: 480px) 440px, 800px" src="https://image.tmdb.org/t/p/w92/${movie.poster_path}" alt="${movie.title} Poster" />
         <figcaption class="movie--credits">
           <h2 class="movie--title">${movie.title}</h2>
+          <h3 class="movie--rating">Rating: ${movie.vote_average}</h3>
           <ul class="movie--genres tags">
             ${filmGenres.map(genre => (`<li class="genre tag"><span class="tag-label">${genre.name}</span></li>`)).join('')}
           </ul>
@@ -150,6 +158,9 @@ function renderMovieListing(movies){
 
 }
 
+/// Get the lected genres for the filter movie button and set the click
+/// event to trigger the (re)filtering of the view.
+//
 const genreFilter = document.querySelector('.genre_filter--trigger');
 genreFilter.addEventListener('click', (e)=>{
   e.preventDefault();
